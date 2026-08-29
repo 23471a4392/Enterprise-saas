@@ -1,0 +1,5 @@
+{
+  "version": "2.2.0",
+  "templates": ["Standard Full-Time", "Executive", "Contractor", "Internship"],
+  "eSignature": true
+}
