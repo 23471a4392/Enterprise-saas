@@ -1,0 +1,5 @@
+{
+  "approvalTiers": ["Department Head", "VP HR", "CFO"],
+  "expirationWindowDays": 7,
+  "eSignatureProvider": "TalentPulse-Native-Sign"
+}
