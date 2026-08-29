@@ -70,38 +70,46 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const LOCAL_STORAGE_KEY = 'TALENTPULSE_APP_STATE_V1';
 
+const safeParseJSON = <T,>(saved: string | null, fallback: T): T => {
+  if (!saved) return fallback;
+  try {
+    const parsed = JSON.parse(saved);
+    if (parsed && (Array.isArray(parsed) || typeof parsed === 'object')) {
+      return parsed;
+    }
+    return fallback;
+  } catch (e) {
+    console.warn('Invalid JSON payload detected in storage, recovering with mock fallback:', e);
+    return fallback;
+  }
+};
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentRole, setCurrentRole] = useState<UserRole>('recruiter');
 
-  // Initialize from LocalStorage if exists, else mockData
+  // Initialize from LocalStorage safely with HTML/Corrupted payload fallback
   const [candidates, setCandidates] = useState<Candidate[]>(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY + '_CANDIDATES');
-    return saved ? JSON.parse(saved) : mockCandidates;
+    return safeParseJSON(localStorage.getItem(LOCAL_STORAGE_KEY + '_CANDIDATES'), mockCandidates);
   });
 
   const [companies, setCompanies] = useState<Company[]>(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY + '_COMPANIES');
-    return saved ? JSON.parse(saved) : mockCompanies;
+    return safeParseJSON(localStorage.getItem(LOCAL_STORAGE_KEY + '_COMPANIES'), mockCompanies);
   });
 
   const [jobs, setJobs] = useState<Job[]>(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY + '_JOBS');
-    return saved ? JSON.parse(saved) : mockJobs;
+    return safeParseJSON(localStorage.getItem(LOCAL_STORAGE_KEY + '_JOBS'), mockJobs);
   });
 
   const [applications, setApplications] = useState<Application[]>(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY + '_APPLICATIONS');
-    return saved ? JSON.parse(saved) : mockApplications;
+    return safeParseJSON(localStorage.getItem(LOCAL_STORAGE_KEY + '_APPLICATIONS'), mockApplications);
   });
 
   const [interviews, setInterviews] = useState<Interview[]>(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY + '_INTERVIEWS');
-    return saved ? JSON.parse(saved) : mockInterviews;
+    return safeParseJSON(localStorage.getItem(LOCAL_STORAGE_KEY + '_INTERVIEWS'), mockInterviews);
   });
 
   const [offers, setOffers] = useState<Offer[]>(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY + '_OFFERS');
-    return saved ? JSON.parse(saved) : mockOffers;
+    return safeParseJSON(localStorage.getItem(LOCAL_STORAGE_KEY + '_OFFERS'), mockOffers);
   });
 
   const [analytics] = useState<AnalyticsMetric>(mockAnalytics);
@@ -118,7 +126,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const id = 'toast_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
     setToasts((prev) => [...prev, { id, type, title, message }]);
 
-    // Auto dismiss after 4 seconds
     setTimeout(() => {
       removeToast(id);
     }, 4000);
@@ -128,29 +135,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // Sync to LocalStorage
+  // Sync to LocalStorage safely
   useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY + '_CANDIDATES', JSON.stringify(candidates));
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY + '_CANDIDATES', JSON.stringify(candidates));
+    } catch (e) {
+      // ignore storage quota errors
+    }
   }, [candidates]);
 
   useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY + '_COMPANIES', JSON.stringify(companies));
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY + '_COMPANIES', JSON.stringify(companies));
+    } catch (e) {}
   }, [companies]);
 
   useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY + '_JOBS', JSON.stringify(jobs));
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY + '_JOBS', JSON.stringify(jobs));
+    } catch (e) {}
   }, [jobs]);
 
   useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY + '_APPLICATIONS', JSON.stringify(applications));
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY + '_APPLICATIONS', JSON.stringify(applications));
+    } catch (e) {}
   }, [applications]);
 
   useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY + '_INTERVIEWS', JSON.stringify(interviews));
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY + '_INTERVIEWS', JSON.stringify(interviews));
+    } catch (e) {}
   }, [interviews]);
 
   useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY + '_OFFERS', JSON.stringify(offers));
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY + '_OFFERS', JSON.stringify(offers));
+    } catch (e) {}
   }, [offers]);
 
   // Actions Implementation
@@ -177,7 +198,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     if (!targetJob || !targetCandidate) return;
 
-    // Check if already applied
     const existing = applications.find((a) => a.jobId === jobId && a.candidateId === candidateId);
     if (existing) {
       addToast('warning', 'Already Applied', 'You have already submitted an application for this role.');
@@ -265,8 +285,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setInterviews((prev) => [newInterview, ...prev]);
-
-    // Also update application stage to interview_scheduled
     updateApplicationStage(interviewData.applicationId, 'interview_scheduled');
     addToast('success', 'Interview Scheduled', `Interview confirmed with ${interviewData.candidateName} for ${new Date(interviewData.scheduledAt).toLocaleString()}`);
   };
@@ -332,12 +350,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const resetDemoData = () => {
-    localStorage.removeItem(LOCAL_STORAGE_KEY + '_CANDIDATES');
-    localStorage.removeItem(LOCAL_STORAGE_KEY + '_COMPANIES');
-    localStorage.removeItem(LOCAL_STORAGE_KEY + '_JOBS');
-    localStorage.removeItem(LOCAL_STORAGE_KEY + '_APPLICATIONS');
-    localStorage.removeItem(LOCAL_STORAGE_KEY + '_INTERVIEWS');
-    localStorage.removeItem(LOCAL_STORAGE_KEY + '_OFFERS');
+    try {
+      localStorage.removeItem(LOCAL_STORAGE_KEY + '_CANDIDATES');
+      localStorage.removeItem(LOCAL_STORAGE_KEY + '_COMPANIES');
+      localStorage.removeItem(LOCAL_STORAGE_KEY + '_JOBS');
+      localStorage.removeItem(LOCAL_STORAGE_KEY + '_APPLICATIONS');
+      localStorage.removeItem(LOCAL_STORAGE_KEY + '_INTERVIEWS');
+      localStorage.removeItem(LOCAL_STORAGE_KEY + '_OFFERS');
+    } catch (e) {}
 
     setCandidates(mockCandidates);
     setCompanies(mockCompanies);
