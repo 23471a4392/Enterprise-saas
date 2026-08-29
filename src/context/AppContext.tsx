@@ -72,6 +72,14 @@ const LOCAL_STORAGE_KEY = 'TALENTPULSE_APP_STATE_V1';
 
 const safeParseJSON = <T,>(saved: string | null, fallback: T): T => {
   if (!saved) return fallback;
+  const trimmed = saved.trim();
+  
+  // Explicit check for HTML response payload starting with '<'
+  if (trimmed.startsWith('<') || trimmed.toLowerCase().startsWith('<!doctype html>')) {
+    console.warn('HTML document string detected in storage key, falling back to mock dataset.');
+    return fallback;
+  }
+
   try {
     const parsed = JSON.parse(saved);
     if (parsed && (Array.isArray(parsed) || typeof parsed === 'object')) {
@@ -139,9 +147,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     try {
       localStorage.setItem(LOCAL_STORAGE_KEY + '_CANDIDATES', JSON.stringify(candidates));
-    } catch (e) {
-      // ignore storage quota errors
-    }
+    } catch (e) {}
   }, [candidates]);
 
   useEffect(() => {
@@ -351,12 +357,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const resetDemoData = () => {
     try {
-      localStorage.removeItem(LOCAL_STORAGE_KEY + '_CANDIDATES');
-      localStorage.removeItem(LOCAL_STORAGE_KEY + '_COMPANIES');
-      localStorage.removeItem(LOCAL_STORAGE_KEY + '_JOBS');
-      localStorage.removeItem(LOCAL_STORAGE_KEY + '_APPLICATIONS');
-      localStorage.removeItem(LOCAL_STORAGE_KEY + '_INTERVIEWS');
-      localStorage.removeItem(LOCAL_STORAGE_KEY + '_OFFERS');
+      localStorage.clear();
     } catch (e) {}
 
     setCandidates(mockCandidates);
@@ -366,7 +367,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setInterviews(mockInterviews);
     setOffers(mockOffers);
 
-    addToast('info', 'Demo Data Reset', 'Platform datasets restored to initial state.');
+    addToast('info', 'Demo Data Reset', 'Platform datasets and storage cleared and restored.');
   };
 
   return (
