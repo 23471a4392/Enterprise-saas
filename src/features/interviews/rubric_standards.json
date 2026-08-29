@@ -1,0 +1,6 @@
+{
+  "rubrics": [
+    {"category": "System Design", "criteria": ["Scalability", "Fault Tolerance", "Data Modeling"]},
+    {"category": "Behavioral", "criteria": ["Ownership", "Collaboration", "Conflict Resolution"]}
+  ]
+}
