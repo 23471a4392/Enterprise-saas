@@ -1,0 +1,9 @@
+{
+  "version": "1.4.0",
+  "weights": {
+    "skills": 0.45,
+    "experience": 0.35,
+    "education": 0.20
+  },
+  "minimumScore": 75
+}
