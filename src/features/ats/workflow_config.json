@@ -1,0 +1,6 @@
+{
+  "version": "2.5.0",
+  "stages": ["Applied", "Screening", "Technical Interview", "Executive Review", "Offer Extended", "Hired"],
+  "slaThresholdHours": 72,
+  "autoRejectOnInactivityDays": 30
+}
