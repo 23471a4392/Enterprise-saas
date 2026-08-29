@@ -1,0 +1,6 @@
+{
+  "version": "2.1.0",
+  "stages": ["Sourced", "Screening", "Interview", "Offer", "Hired"],
+  "autoTransition": true,
+  "slaDays": 14
+}
