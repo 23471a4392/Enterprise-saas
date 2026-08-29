@@ -1,0 +1,7 @@
+{
+  "algorithm": "transformer-resume-matcher-v2",
+  "skillWeight": 0.50,
+  "experienceWeight": 0.30,
+  "educationWeight": 0.20,
+  "thresholdScore": 70
+}
